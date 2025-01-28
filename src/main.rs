@@ -1,10 +1,11 @@
+mod loadlibrary;
+use loadlibrary::Library;
+
 use pretty_hex::PrettyHex;
 use std::ffi::c_void;
 use std::fmt;
 use std::mem;
 
-type HModule = *const c_void;
-type FarProc = *const c_void;
 type Handle = *const c_void;
 
 type IcmpCreateFile = extern "stdcall" fn() -> Handle;
@@ -18,11 +19,6 @@ type IcmpSendEcho = extern "stdcall" fn(
     reply_size: u32,
     timeout: u32,
 ) -> u32;
-
-extern "stdcall" {
-    fn LoadLibraryA(name: *const i8) -> HModule;
-    fn GetProcAddress(module: HModule, proc_name: *const i8) -> FarProc;
-}
 
 #[repr(C)]
 struct IPAddr([u8; 4]);
@@ -57,11 +53,9 @@ struct IcmpEchoReply {
 }
 
 fn main() {
-    let ip_hlp_api = unsafe { LoadLibraryA(c"IPHLPAPI.dll".as_ptr()) };
-    let icmp_create_file: IcmpCreateFile =
-        unsafe { mem::transmute(GetProcAddress(ip_hlp_api, c"IcmpCreateFile".as_ptr())) };
-    let icmp_send_echo: IcmpSendEcho =
-        unsafe { mem::transmute(GetProcAddress(ip_hlp_api, c"IcmpSendEcho".as_ptr())) };
+    let ip_hlp = Library::new("IPHLPAPI.dll").expect("Should have been able to open dll");
+    let icmp_create_file: IcmpCreateFile = unsafe { ip_hlp.get_proc("IcmpCreateFile").unwrap() };
+    let icmp_send_echo: IcmpSendEcho = unsafe { ip_hlp.get_proc("IcmpSendEcho").unwrap() };
 
     let data = "Foo Bar Baz";
     let reply_size = mem::size_of::<IcmpEchoReply>();
