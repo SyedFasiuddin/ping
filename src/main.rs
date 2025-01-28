@@ -94,7 +94,7 @@ fn main() {
     let reply: &IcmpEchoReply = unsafe { mem::transmute(&reply_buf[0]) };
     println!("{:#?}", *reply);
 
-    let reply_data: *const u8 = unsafe { mem::transmute(&reply_buf[reply_size + 8]) };
+    let reply_data = &reply_buf[reply_size + 8] as *const u8;
     let reply_data = unsafe { std::slice::from_raw_parts(reply_data, reply.data_size as usize) };
 
     println!("{:?}", reply_data.hex_dump());
