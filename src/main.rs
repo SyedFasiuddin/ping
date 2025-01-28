@@ -1,6 +1,7 @@
 use std::ffi::c_void;
 use std::fmt;
 use std::mem;
+use pretty_hex::PrettyHex;
 
 type HModule = *const c_void;
 type FarProc = *const c_void;
@@ -71,4 +72,5 @@ fn main() {
     );
 
     println!("ret: {}", ret);
+    println!("{:?}", reply_buf.hex_dump());
 }
