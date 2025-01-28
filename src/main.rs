@@ -1,7 +1,7 @@
+use pretty_hex::PrettyHex;
 use std::ffi::c_void;
 use std::fmt;
 use std::mem;
-use pretty_hex::PrettyHex;
 
 type HModule = *const c_void;
 type FarProc = *const c_void;
@@ -35,12 +35,25 @@ impl fmt::Debug for IPAddr {
 }
 
 #[repr(C)]
+#[derive(Debug)]
 struct IpOptionInformation {
     ttl: u8,
     tos: u8,
     flags: u8,
     options_size: u8,
     options_data: u32,
+}
+
+#[repr(C)]
+#[derive(Debug)]
+struct IcmpEchoReply {
+    address: IPAddr,
+    status: u32,
+    round_trip_time: u32,
+    data_size: u16,
+    reserved: u16,
+    data: *const u8,
+    options: IpOptionInformation,
 }
 
 fn main() {
@@ -51,7 +64,10 @@ fn main() {
         unsafe { mem::transmute(GetProcAddress(ip_hlp_api, "IcmpSendEcho\0".as_ptr())) };
 
     let data = "Foo Bar Baz";
-    let mut reply_buf = vec![0u8; 128];
+    let reply_size = mem::size_of::<IcmpEchoReply>();
+
+    let reply_buf_size = reply_size + 8 + data.len();
+    let mut reply_buf = vec![0u8; reply_buf_size];
 
     let handle = icmp_create_file();
     let ret = icmp_send_echo(
@@ -67,10 +83,19 @@ fn main() {
             options_size: 0,
         }),
         reply_buf.as_mut_ptr(),
-        reply_buf.len() as u32,
+        reply_buf_size as u32,
         4000,
     );
 
-    println!("ret: {}", ret);
-    println!("{:?}", reply_buf.hex_dump());
+    if ret == 0 {
+        panic!("IcmpSendEcho failed, ret: {}", ret);
+    }
+
+    let reply: &IcmpEchoReply = unsafe { mem::transmute(&reply_buf[0]) };
+    println!("{:#?}", *reply);
+
+    let reply_data: *const u8 = unsafe { mem::transmute(&reply_buf[reply_size + 8]) };
+    let reply_data = unsafe { std::slice::from_raw_parts(reply_data, reply.data_size as usize) };
+
+    println!("{:?}", reply_data.hex_dump());
 }
