@@ -3,5 +3,10 @@ mod ipv4;
 mod icmp;
 
 fn main() {
-    icmp::ping(ipv4::Addr([8, 8, 8, 8])).unwrap();
+    let addr = std::env::args().nth(1).unwrap_or_else(|| {
+        eprintln!("Usage: ping <DEST>");
+        std::process::exit(1);
+    });
+    let dest = ipv4::Addr::parse(&addr);
+    icmp::ping(dest).expect("ping failed");
 }

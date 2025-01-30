@@ -9,3 +9,9 @@ impl fmt::Debug for Addr {
         write!(f, "{}.{}.{}.{}", a, b, c, d)
     }
 }
+
+impl Addr {
+    pub fn parse(s: &str) -> Self {
+        unimplemented!();
+    }
+}
