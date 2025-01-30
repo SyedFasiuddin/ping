@@ -24,6 +24,14 @@ impl From<ParseIntError> for ParseAddrError {
     }
 }
 
+impl fmt::Display for ParseAddrError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+impl std::error::Error for ParseAddrError {}
+
 impl std::str::FromStr for Addr {
     type Err = ParseAddrError;
 
