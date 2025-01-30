@@ -2,6 +2,7 @@ use std::fmt;
 use std::num::ParseIntError;
 
 #[repr(C)]
+#[derive(Clone, Copy)]
 pub struct Addr(pub [u8; 4]);
 
 impl fmt::Debug for Addr {

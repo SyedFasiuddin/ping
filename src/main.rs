@@ -7,7 +7,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         eprintln!("Usage: ping <DEST>");
         std::process::exit(1);
     });
-    icmp::ping(addr.parse()?)?;
+    icmp::Request::new(addr.parse()?).send()?;
 
     Ok(())
 }
