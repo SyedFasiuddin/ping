@@ -7,6 +7,5 @@ fn main() {
         eprintln!("Usage: ping <DEST>");
         std::process::exit(1);
     });
-    let dest = ipv4::Addr::parse(&addr).unwrap();
-    icmp::ping(dest).expect("ping failed");
+    icmp::ping(addr.parse().unwrap()).expect("ping failed");
 }

@@ -24,12 +24,11 @@ impl From<ParseIntError> for ParseAddrError {
     }
 }
 
-impl Addr {
-    pub fn parse<S>(s: S) -> Result<Self, ParseAddrError>
-    where
-        S: AsRef<str>,
-    {
-        let mut tokens = s.as_ref().split(".");
+impl std::str::FromStr for Addr {
+    type Err = ParseAddrError;
+
+    fn from_str(s: &str) -> Result<Self, ParseAddrError> {
+        let mut tokens = s.split(".");
 
         let mut res = Self([0, 0, 0, 0]);
         for part in res.0.iter_mut() {
