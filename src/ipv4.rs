@@ -30,25 +30,13 @@ impl Addr {
     {
         let mut tokens = s.as_ref().split(".");
 
-        let a = tokens
-            .next()
-            .ok_or(ParseAddrError::NotEnoughParts)?
-            .parse::<u8>()?;
-        let b = tokens
-            .next()
-            .ok_or(ParseAddrError::NotEnoughParts)?
-            .parse::<u8>()?;
-        let c = tokens
-            .next()
-            .ok_or(ParseAddrError::NotEnoughParts)?
-            .parse::<u8>()?;
-        let d = tokens
-            .next()
-            .ok_or(ParseAddrError::NotEnoughParts)?
-            .parse::<u8>()?;
+        let mut f = || -> Result<u8, ParseAddrError> {
+            Ok(tokens
+                .next()
+                .ok_or(ParseAddrError::NotEnoughParts)?
+                .parse()?)
+        };
 
-        dbg!(a, b, c, d);
-
-        Ok(Self([a, b, c, d]))
+        Ok(Self([f()?, f()?, f()?, f()?]))
     }
 }
