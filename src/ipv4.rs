@@ -14,6 +14,7 @@ impl fmt::Debug for Addr {
 #[derive(Debug)]
 pub enum ParseAddrError {
     NotEnoughParts,
+    TooManyParts,
     ParseIntError(ParseIntError),
 }
 
@@ -30,13 +31,18 @@ impl Addr {
     {
         let mut tokens = s.as_ref().split(".");
 
-        let mut f = || -> Result<u8, ParseAddrError> {
-            Ok(tokens
+        let mut res = Self([0, 0, 0, 0]);
+        for part in res.0.iter_mut() {
+            *part = tokens
                 .next()
                 .ok_or(ParseAddrError::NotEnoughParts)?
-                .parse()?)
-        };
+                .parse()?
+        }
 
-        Ok(Self([f()?, f()?, f()?, f()?]))
+        if let Some(_) = tokens.next() {
+            return Err(ParseAddrError::TooManyParts);
+        }
+
+        Ok(res)
     }
 }
