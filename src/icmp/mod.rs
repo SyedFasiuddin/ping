@@ -3,11 +3,9 @@ mod icmp_sys;
 use crate::ipv4;
 use std::mem;
 
-pub struct Request {
-}
+pub struct Request {}
 
-pub struct Response {
-}
+pub struct Response {}
 
 pub fn ping(dest: ipv4::Addr) -> Result<(), String> {
     let data = "Foo Bar Baz";
