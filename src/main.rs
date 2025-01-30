@@ -1,9 +1,10 @@
 mod loadlibrary;
+mod ipv4;
+
 use loadlibrary::Library;
 
 use pretty_hex::PrettyHex;
 use std::ffi::c_void;
-use std::fmt;
 use std::mem;
 
 type Handle = *const c_void;
@@ -11,7 +12,7 @@ type Handle = *const c_void;
 type IcmpCreateFile = extern "stdcall" fn() -> Handle;
 type IcmpSendEcho = extern "stdcall" fn(
     icmp_handle: Handle,
-    destination_address: IPAddr,
+    destination_address: ipv4::Addr,
     request_data: *const u8,
     request_size: u16,
     request_options: Option<&IpOptionInformation>,
@@ -19,16 +20,6 @@ type IcmpSendEcho = extern "stdcall" fn(
     reply_size: u32,
     timeout: u32,
 ) -> u32;
-
-#[repr(C)]
-struct IPAddr([u8; 4]);
-
-impl fmt::Debug for IPAddr {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let [a, b, c, d] = self.0;
-        write!(f, "{}.{}.{}.{}", a, b, c, d)
-    }
-}
 
 #[repr(C)]
 #[derive(Debug)]
@@ -43,7 +34,7 @@ struct IpOptionInformation {
 #[repr(C)]
 #[derive(Debug)]
 struct IcmpEchoReply {
-    address: IPAddr,
+    address: ipv4::Addr,
     status: u32,
     round_trip_time: u32,
     data_size: u16,
@@ -66,7 +57,7 @@ fn main() {
     let handle = icmp_create_file();
     let ret = icmp_send_echo(
         handle,
-        IPAddr([8, 8, 8, 8]),
+        ipv4::Addr([8, 8, 8, 8]),
         data.as_ptr(),
         data.len() as u16,
         Some(&IpOptionInformation {
