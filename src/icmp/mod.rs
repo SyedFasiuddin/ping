@@ -41,7 +41,7 @@ impl Request {
     // This function consumes/takes ownership of `Self`, signified by `self` parameter, if it were
     // `&self` then it wouldn't take ownership
     /// Send an ICMP Request
-    pub fn send(self) -> Result<(), String> {
+    pub fn send(self) -> Result<Response, String> {
         let data = self.data.unwrap_or_default();
 
         let reply_size = mem::size_of::<icmp_sys::IcmpEchoReply>();
@@ -71,9 +71,28 @@ impl Request {
 
         match ret {
             0 => Err("icmp_send_echo failed".to_string()),
-            _ => Ok(()),
+            _ => {
+                let reply: &icmp_sys::IcmpEchoReply = unsafe { mem::transmute(&reply_buf[0]) };
+                let data: Vec<u8> = unsafe {
+                    let data_ptr: *const u8 = mem::transmute(&reply_buf[reply_size + 8]);
+                    std::slice::from_raw_parts(data_ptr, reply.data_size as usize)
+                }
+                .into();
+
+                Ok(Response {
+                    addr: reply.address,
+                    data,
+                    rtt: std::time::Duration::from_millis(reply.round_trip_time as u64),
+                    ttl: reply.options.ttl,
+                })
+            }
         }
     }
 }
 
-pub struct Response {}
+pub struct Response {
+    pub addr: ipv4::Addr,
+    pub data: Vec<u8>,
+    pub rtt: std::time::Duration,
+    pub ttl: u8,
+}
