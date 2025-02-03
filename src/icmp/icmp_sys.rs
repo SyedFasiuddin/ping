@@ -27,53 +27,28 @@ pub struct IcmpEchoReply {
 
 pub type Handle = *const c_void;
 
-type IcmpCreateFile = extern "stdcall" fn() -> Handle;
-
-pub fn icmp_create_file() -> Handle {
-    let ip_hlp = Library::new("IPHLPAPI.dll").unwrap();
-    let icmp_create_file: IcmpCreateFile = unsafe { ip_hlp.get_proc("IcmpCreateFile").unwrap() };
-    icmp_create_file()
+pub struct Functions {
+    pub icmp_create_file: extern "stdcall" fn() -> Handle,
+    pub icmp_send_echo: extern "stdcall" fn(
+        icmp_handle: Handle,
+        destination_address: ipv4::Addr,
+        request_data: *const u8,
+        request_size: u16,
+        request_options: Option<&IpOptionInformation>,
+        reply_buffer: *mut u8,
+        reply_size: u32,
+        timeout: u32,
+    ) -> u32,
+    pub icmp_close_handle: extern "stdcall" fn(handle: Handle),
 }
 
-type IcmpSendEcho = extern "stdcall" fn(
-    icmp_handle: Handle,
-    destination_address: ipv4::Addr,
-    request_data: *const u8,
-    request_size: u16,
-    request_options: Option<&IpOptionInformation>,
-    reply_buffer: *mut u8,
-    reply_size: u32,
-    timeout: u32,
-) -> u32;
-
-pub fn icmp_send_echo(
-    icmp_handle: Handle,
-    destination_address: ipv4::Addr,
-    request_data: *const u8,
-    request_size: u16,
-    request_options: Option<&IpOptionInformation>,
-    reply_buffer: *mut u8,
-    reply_size: u32,
-    timeout: u32,
-) -> u32 {
-    let ip_hlp = Library::new("IPHLPAPI.dll").unwrap();
-    let icmp_send_echo: IcmpSendEcho = unsafe { ip_hlp.get_proc("IcmpSendEcho").unwrap() };
-    icmp_send_echo(
-        icmp_handle,
-        destination_address,
-        request_data,
-        request_size,
-        request_options,
-        reply_buffer,
-        reply_size,
-        timeout,
-    )
-}
-
-type IcmpCloseHandle = extern "stdcall" fn(handle: Handle);
-
-pub fn icmp_close_handle(handle: Handle) {
-    let ip_hlp = Library::new("IPHLPAPI.dll").unwrap();
-    let icmp_close_handle: IcmpCloseHandle = unsafe { ip_hlp.get_proc("IcmpCloseHandle").unwrap() };
-    icmp_close_handle(handle)
+impl Functions {
+    pub fn get() -> Self {
+        let ip_hlp = Library::new("IPHLPAPI.dll").unwrap();
+        Self {
+            icmp_create_file: unsafe { ip_hlp.get_proc("IcmpCreateFile").unwrap() },
+            icmp_send_echo: unsafe { ip_hlp.get_proc("IcmpSendEcho").unwrap() },
+            icmp_close_handle: unsafe { ip_hlp.get_proc("IcmpCloseHandle").unwrap() },
+        }
+    }
 }

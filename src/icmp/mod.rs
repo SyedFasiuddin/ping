@@ -48,7 +48,8 @@ impl Request {
         let reply_buf_size = reply_size + 8 + data.len();
         let mut reply_buf = vec![0u8; reply_buf_size];
 
-        let handle = icmp_sys::icmp_create_file();
+        let fns = icmp_sys::Functions::get();
+        let handle = (fns.icmp_create_file)();
         let ip_options = icmp_sys::IpOptionInformation {
             ttl: self.ttl,
             tos: 0,
@@ -56,9 +57,8 @@ impl Request {
             options_data: 0,
             options_size: 0,
         };
-        icmp_sys::icmp_close_handle(handle);
 
-        match icmp_sys::icmp_send_echo(
+        let ret = (fns.icmp_send_echo)(
             handle,
             self.dest,
             data.as_ptr(),
@@ -67,7 +67,10 @@ impl Request {
             reply_buf.as_mut_ptr(),
             reply_buf_size as u32,
             self.timeout,
-        ) {
+        );
+        (fns.icmp_close_handle)(handle);
+
+        match ret {
             0 => Err("icmp_send_echo failed".to_string()),
             _ => Ok(()),
         }
