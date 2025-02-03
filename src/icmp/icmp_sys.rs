@@ -69,3 +69,11 @@ pub fn icmp_send_echo(
         timeout,
     )
 }
+
+type IcmpCloseHandle = extern "stdcall" fn(handle: Handle);
+
+pub fn icmp_close_handle(handle: Handle) {
+    let ip_hlp = Library::new("IPHLPAPI.dll").unwrap();
+    let icmp_close_handle: IcmpCloseHandle = unsafe { ip_hlp.get_proc("IcmpCloseHandle").unwrap() };
+    icmp_close_handle(handle)
+}

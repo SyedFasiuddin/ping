@@ -56,6 +56,7 @@ impl Request {
             options_data: 0,
             options_size: 0,
         };
+        icmp_sys::icmp_close_handle(handle);
 
         match icmp_sys::icmp_send_echo(
             handle,
