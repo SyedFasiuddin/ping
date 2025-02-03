@@ -1,11 +1,47 @@
 use std::ffi::c_void;
 
 use crate::ipv4;
-use crate::loadlibrary::Library;
 
-use once_cell::sync::Lazy;
+use paste::paste;
 
-pub static FUNCTIONS: Lazy<Functions> = Lazy::new(|| Functions::get());
+macro_rules! bind {
+    ($(fn $name:ident($($arg:ident: $type:ty),*) -> $ret:ty;)*) => {
+        struct Functions {
+            $(pub $name: extern "stdcall" fn($($arg: $type),*) -> $ret),*
+        }
+
+        static FUNCTIONS: once_cell::sync::Lazy<Functions> = once_cell::sync::Lazy::new(|| {
+            let lib = crate::loadlibrary::Library::new("IPHLPAPI.dll").unwrap();
+            paste! {
+                Functions {
+                    $($name: unsafe { lib.get_proc(stringify!([<$name:camel>])).unwrap() }),*
+                }
+            }
+        });
+
+        $(
+            #[inline(always)]
+            pub fn $name($($arg: $type),*) -> $ret {
+                (FUNCTIONS.$name)($($arg),*)
+            }
+        )*
+    };
+}
+
+bind! {
+    fn icmp_create_file() -> Handle;
+    fn icmp_send_echo(
+        icmp_handle: Handle,
+        destination_address: ipv4::Addr,
+        request_data: *const u8,
+        request_size: u16,
+        request_options: Option<&IpOptionInformation>,
+        reply_buffer: *mut u8,
+        reply_size: u32,
+        timeout: u32
+    ) -> u32;
+    fn icmp_close_handle(handle: Handle) -> ();
+}
 
 #[repr(C)]
 #[derive(Debug)]
@@ -30,29 +66,3 @@ pub struct IcmpEchoReply {
 }
 
 pub type Handle = *const c_void;
-
-pub struct Functions {
-    pub icmp_create_file: extern "stdcall" fn() -> Handle,
-    pub icmp_send_echo: extern "stdcall" fn(
-        icmp_handle: Handle,
-        destination_address: ipv4::Addr,
-        request_data: *const u8,
-        request_size: u16,
-        request_options: Option<&IpOptionInformation>,
-        reply_buffer: *mut u8,
-        reply_size: u32,
-        timeout: u32,
-    ) -> u32,
-    pub icmp_close_handle: extern "stdcall" fn(handle: Handle),
-}
-
-impl Functions {
-    fn get() -> Self {
-        let ip_hlp = Library::new("IPHLPAPI.dll").unwrap();
-        Self {
-            icmp_create_file: unsafe { ip_hlp.get_proc("IcmpCreateFile").unwrap() },
-            icmp_send_echo: unsafe { ip_hlp.get_proc("IcmpSendEcho").unwrap() },
-            icmp_close_handle: unsafe { ip_hlp.get_proc("IcmpCloseHandle").unwrap() },
-        }
-    }
-}
