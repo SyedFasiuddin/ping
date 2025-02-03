@@ -48,7 +48,7 @@ impl Request {
         let reply_buf_size = reply_size + 8 + data.len();
         let mut reply_buf = vec![0u8; reply_buf_size];
 
-        let fns = icmp_sys::Functions::get();
+        let fns = &icmp_sys::FUNCTIONS;
         let handle = (fns.icmp_create_file)();
         let ip_options = icmp_sys::IpOptionInformation {
             ttl: self.ttl,

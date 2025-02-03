@@ -3,6 +3,10 @@ use std::ffi::c_void;
 use crate::ipv4;
 use crate::loadlibrary::Library;
 
+use once_cell::sync::Lazy;
+
+pub static FUNCTIONS: Lazy<Functions> = Lazy::new(|| Functions::get());
+
 #[repr(C)]
 #[derive(Debug)]
 pub struct IpOptionInformation {
@@ -43,7 +47,7 @@ pub struct Functions {
 }
 
 impl Functions {
-    pub fn get() -> Self {
+    fn get() -> Self {
         let ip_hlp = Library::new("IPHLPAPI.dll").unwrap();
         Self {
             icmp_create_file: unsafe { ip_hlp.get_proc("IcmpCreateFile").unwrap() },
