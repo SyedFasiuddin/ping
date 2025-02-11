@@ -1,9 +1,9 @@
-use std::time::Instant;
 use std::time::Duration;
+use std::time::Instant;
 
-use ersatz::Interface;
-use ersatz::ipv4;
 use ersatz::icmp;
+use ersatz::ipv4;
+use ersatz::Interface;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let addr = std::env::args().nth(1).unwrap_or_else(|| {
