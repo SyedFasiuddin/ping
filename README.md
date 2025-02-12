@@ -20,5 +20,11 @@ windows to provide a network interface in the user space, the rawsock crate
 buffers the packets and that is why we see packets taking a second to get back
 to us.
 
+The `win-interface-info.c` file is used to know the GUID of the default network
+interface on windows, to compile it use:
+```
+cl.exe win-interface-info.c /link iphlpapi.lib
+```
+
 
 [1]: https://fasterthanli.me/series/making-our-own-ping
