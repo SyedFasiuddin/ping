@@ -26,5 +26,8 @@ interface on windows, to compile it use:
 cl.exe win-interface-info.c /link iphlpapi.lib
 ```
 
+The `unix-ping.c` file can be used to send and receive ping requests on, well,
+Unix machines. `cc unix-ping.c`
+
 
 [1]: https://fasterthanli.me/series/making-our-own-ping
